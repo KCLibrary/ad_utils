@@ -1,0 +1,15 @@
+require 'ostruct'
+require 'net/ldap'
+
+module AdUtils
+  class Connector
+    
+    def self.connection
+      @connection ||= begin
+        raise 'No connection defined' unless AdUtils.config.connection
+        Net::LDAP.new(AdUtils.config.connection)
+      end
+    end
+    
+  end
+end
