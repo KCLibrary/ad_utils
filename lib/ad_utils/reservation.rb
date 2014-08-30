@@ -4,10 +4,14 @@ module AdUtils
     
     TIME_ZONE = 'CDT'
     
-    attr_reader :uid, :start_time, :end_time
+    attr_reader :uid, :start_time, :end_time, :queue_name
     
     def initialize(opts = {})
+      unless defined? Delayed::MessageSending
+        raise 'Reservation creation depends on Delayed Job'
+      end
       @uid        = opts.fetch(:uid)
+      @queue_name = opts.fetch(:queue_name, nil)
       @start_time = opts.fetch(:start_time)
       @end_time   = opts.fetch(:end_time)
     end
@@ -15,11 +19,24 @@ module AdUtils
     def user; User.new(uid: uid); end
   
     def modify(b)
-      AdUtils.connection.replace_attribute user.dn, :logonHours, logon_hours_formatted(b)
+      args = [user.dn, :logonHours, logon_hours_formatted(b)]
+      AdUtils.connection.replace_attribute *args
     end
     
-    def create; modify('1'); end
-    def delete; modify('0'); end    
+    def __create__; modify('1'); end
+    def __delete__; modify('0'); end    
+
+    def create
+      __create__
+      __delete__.delay(queue: queue_name, run_at: end_time + 3600)
+    end
+    
+    handle_asynchronously(:create, {
+      queue:  Proc.new { |i| i.queue_name },
+      run_at: Proc.new { |i| i.start_time - 3600 }
+    }) if respond_to?(:handle_asynchronously)
+    
+    alias_method :delete, :__delete__
 
     def duration
       ((end_time - start_time) / 3600).to_i
