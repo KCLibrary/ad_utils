@@ -6,37 +6,45 @@ Because ActiveDirectory logon hours are setup on a weekly basis, reservations ha
 
 Add to `Gemfile` like:
 
-    gem 'ad_utils', git: 'https://github.com/kardeiz/ad_utils'
+```ruby
+gem 'ad_utils', git: 'https://github.com/kardeiz/ad_utils'
+```
 
 and `bundle`.
 
 Somewhere in your application do:
 
-    AdUtils.config do |conf|
-      conf.connection = hash
-      # where hash is a standard Net::LDAP initialization hash
-      conf.base_groups = arr
-      # where arr is an array of Group DNs that you would like to add new users to
-    end
+```ruby
+AdUtils.config do |conf|
+  conf.connection = hash
+  # where hash is a standard Net::LDAP initialization hash
+  conf.base_groups = arr
+  # where arr is an array of Group DNs that you would like to add new users to
+end
+```
 
 Then you can add a user like:
 
-    user = AdUtils::User.new({
-      uid:        'kardeiz',
-      last_name:  'Brown',
-      first_name: 'Jacob',
-      password:   'test'
-    })
+```ruby
+user = AdUtils::User.new({
+  uid:        'kardeiz',
+  last_name:  'Brown',
+  first_name: 'Jacob',
+  password:   'test'
+})
 
-    user.create
-    user.delete
+user.create
+user.delete
+```
 
 You can create a reservation (i.e., add logon hours for a specified datetime), like so:
 
-    res = AdUtils::Reservation.new({
-      uid:        user.uid,
-      start_time: Time.now.beginning_of_hour,
-      end_time:   Time.now.beginning_of_hour + 3.hours
-    })
+```ruby
+res = AdUtils::Reservation.new({
+  uid:        user.uid,
+  start_time: Time.now.beginning_of_hour,
+  end_time:   Time.now.beginning_of_hour + 3.hours
+})
 
-    res.create
+res.create
+```
