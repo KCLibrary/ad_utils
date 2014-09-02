@@ -1,29 +1,42 @@
 # AdUtils
 
-TODO: Write a gem description
+Some simple utilities for creating users and "reservations" in ActiveDirectory.
 
-## Installation
+Because ActiveDirectory logon hours are setup on a weekly basis, reservations have to be scheduled rather than directly set. This gem uses DelayedJob to schedule these actions, but could easily be extended to use another background processing system.
 
-Add this line to your application's Gemfile:
+Add to `Gemfile` like:
 
-    gem 'ad_utils'
+    gem 'ad_utils', git: 'https://github.com/kardeiz/ad_utils'
 
-And then execute:
+and `bundle`.
 
-    $ bundle
+Somewhere in your application do:
 
-Or install it yourself as:
+    AdUtils.config do |conf|
+      conf.connection = hash
+      # where hash is a standard Net::LDAP initialization hash
+      conf.base_groups = arr
+      # where arr is an array of Group DNs that you would like to add new users to
+    end
 
-    $ gem install ad_utils
+Then you can add a user like:
 
-## Usage
+    user = AdUtils::User.new({
+      uid:        'kardeiz',
+      last_name:  'Brown',
+      first_name: 'Jacob',
+      password:   'test'
+    })
 
-TODO: Write usage instructions here
+    user.create
+    user.delete
 
-## Contributing
+You can create a reservation (i.e., add logon hours for a specified datetime), like so:
 
-1. Fork it
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create new Pull Request
+    res = AdUtils::Reservation.new({
+      uid:        user.uid,
+      start_time: Time.now.beginning_of_hour,
+      end_time:   Time.now.beginning_of_hour + 3.hours
+    })
+
+    res.create
